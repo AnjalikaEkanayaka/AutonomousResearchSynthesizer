@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import requests
 
 from utils.paper_search import search_arxiv
-from utils.summarizer import summarize_paper_with_gemini, find_research_gap
+from utils.summarizer import summarize_paper_with_gemini, find_research_gap,suggest_methodology_based_on_gap
 
 # Load environment variables from .env file
 load_dotenv()
@@ -101,4 +101,11 @@ if "papers" in st.session_state and st.session_state["papers"]:
             gap_analysis = find_research_gap(papers)
             st.markdown("###  Common Research Gap Identified")
             st.markdown(gap_analysis)
+
+    if gap_analysis:
+        if st.button(" Suggest Methodology & Tools"):
+            with st.spinner("Generating suggestions..."):
+                methodology_suggestion = suggest_methodology_based_on_gap(topic, gap_analysis)
+                st.markdown("### Recommended Methodology and Tools")
+                st.markdown(methodology_suggestion)
 
