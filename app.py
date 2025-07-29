@@ -121,6 +121,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
+from utils.agent import agent
 from utils.paper_search import search_arxiv
 from utils.summarizer import (
     summarize_paper_with_gemini,
@@ -138,7 +139,7 @@ st.title("🎓 Autonomous Research Synthesizer for Students")
 st.markdown("Use Gemini AI + ArXiv to understand topics, find papers, and get research insights.")
 
 # ========== TABS ==========
-tab1, tab2, tab3 = st.tabs(["📘 Topic Explainer", "📄 Paper Finder", "🔍 Gap & Methodology"])
+tab1, tab2, tab3,tab4 = st.tabs(["📘 Topic Explainer", "📄 Paper Finder", "🔍 Gap & Methodology", "🧠 Research Agent"])
 
 # ========== TAB 1: Topic Explainer ==========
 with tab1:
@@ -211,15 +212,15 @@ with tab3:
     st.header("🔍 Analyze Research Gaps + Get Methodology Suggestions")
 
     if "papers" in st.session_state and st.session_state["papers"]:
-        if st.button("🧠 Analyze Common Research Gap"):
+        if st.button(" Analyze Common Research Gap"):
             with st.spinner("Gemini analyzing gap..."):
                 gap_analysis = find_research_gap(st.session_state["papers"])
-                st.markdown("### 🧩 Identified Research Gap")
+                st.markdown("###  Identified Research Gap")
                 st.markdown(gap_analysis)
                 st.session_state["gap_analysis"] = gap_analysis
 
         if "gap_analysis" in st.session_state:
-            if st.button("💡 Suggest Methodology & Tools"):
+            if st.button(" Suggest Methodology & Tools"):
                 with st.spinner("Gemini generating suggestions..."):
                     method_suggestion = suggest_methodology_based_on_gap(
                         st.session_state["topic"],
@@ -229,3 +230,15 @@ with tab3:
                     st.markdown(method_suggestion)
     else:
         st.info("⚠️ Please search papers in the 'Paper Finder' tab first.")
+
+# ========== TAB 4: LANGCHAIN AGENT SECTION ==========
+with tab4:
+    st.header("🧠 Ask the Research Agent")
+
+    query = st.text_input("Ask your research assistant:", placeholder="e.g., 'Find papers on LLMs and suggest methodology'")
+
+    if st.button("Run Agent") and query:
+        with st.spinner("Thinking..."):
+            response = agent.run(query)
+            st.success("Agent Response:")
+            st.markdown(response)
