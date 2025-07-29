@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import requests
 
 from utils.paper_search import search_arxiv
-from utils.summarizer import summarize_paper_with_gemini
+from utils.summarizer import summarize_paper_with_gemini, find_research_gap
 
 # Load environment variables from .env file
 load_dotenv()
@@ -62,35 +62,43 @@ st.subheader(" Relevant Research Papers from ArXiv")
 
 st.markdown("###  Optional Filters")
 
-# Filters first
 subject = st.selectbox(" Select subject area (optional)", options=["", "cs.AI", "cs.CV", "cs.LG", "cs.CL"])
 year = st.selectbox(" Select publication year (optional)", options=[""] + [str(y) for y in range(2024, 2005, -1)])
 num_papers = st.slider(" How many papers to retrieve?", min_value=3, max_value=20, value=5, step=1)
 
-# Button comes AFTER filters
 if st.button("Search Papers"):
     with st.spinner("Searching papers..."):
         papers = search_arxiv(topic, max_results=num_papers,
                               subject_filter=subject if subject else None,
                               year_filter=year if year else None)
+        st.session_state["papers"] = papers
+        st.session_state["topic"] = topic
         if len(papers) < num_papers:
             st.warning(f"Only {len(papers)} result(s) found for your filters. Try removing filters or increasing paper count.")
 
             st.info(f"Showing {len(papers)} result(s) for: *{topic}*")
 
 
-        if papers:
-            for paper in papers:
-                st.markdown(f"### 🔸 **{paper['title']}**", unsafe_allow_html=True)
-                st.markdown(f"**Authors:** {paper['authors']}")
-                st.markdown(f"**Summary:** {paper['summary']}")
-                st.markdown(f"[Read Paper]({paper['link']})", unsafe_allow_html=True)
-                st.markdown("---")
+if "papers" in st.session_state and st.session_state["papers"]:
+    papers = st.session_state["papers"]
+    topic = st.session_state["topic"]
 
-                with st.expander(" Gemini Summary (Method, Results, Conclusion)"):
-                    gemini_summary = summarize_paper_with_gemini(paper['title'], paper['summary'])
-                    st.markdown(gemini_summary)
+    st.info(f"Showing {len(papers)} result(s) for: *{topic}*")
 
-        else:
-            st.warning("No papers found for this topic.")
+    for paper in papers:
+        st.markdown(f"### 🔸 **{paper['title']}**", unsafe_allow_html=True)
+        st.markdown(f"**Authors:** {paper['authors']}")
+        st.markdown(f"**Summary:** {paper['summary']}")
+        st.markdown(f"[Read Paper]({paper['link']})", unsafe_allow_html=True)
+        st.markdown("---")
+
+        with st.expander(" Gemini Summary (Method, Results, Conclusion)"):
+            gemini_summary = summarize_paper_with_gemini(paper['title'], paper['summary'])
+            st.markdown(gemini_summary)
+
+    if st.button(" Analyze Common Research Gap Across These Papers"):
+        with st.spinner("Asking Gemini to analyze gaps..."):
+            gap_analysis = find_research_gap(papers)
+            st.markdown("###  Common Research Gap Identified")
+            st.markdown(gap_analysis)
 
