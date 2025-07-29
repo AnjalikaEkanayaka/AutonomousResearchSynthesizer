@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import requests
 
 from utils.paper_search import search_arxiv
+from utils.summarizer import summarize_paper_with_gemini
 
 # Load environment variables from .env file
 load_dotenv()
@@ -85,6 +86,11 @@ if st.button("Search Papers"):
                 st.markdown(f"**Summary:** {paper['summary']}")
                 st.markdown(f"[Read Paper]({paper['link']})", unsafe_allow_html=True)
                 st.markdown("---")
+
+                with st.expander(" Gemini Summary (Method, Results, Conclusion)"):
+                    gemini_summary = summarize_paper_with_gemini(paper['title'], paper['summary'])
+                    st.markdown(gemini_summary)
+
         else:
             st.warning("No papers found for this topic.")
 
