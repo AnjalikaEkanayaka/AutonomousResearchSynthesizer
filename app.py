@@ -119,9 +119,10 @@
 import streamlit as st
 import os
 import requests
+import tempfile
 from dotenv import load_dotenv
 
-from utils.agent import agent
+from agent import agent
 from utils.paper_search import search_arxiv
 from utils.summarizer import (
     summarize_paper_with_gemini,
@@ -139,7 +140,7 @@ st.title("🎓 Autonomous Research Synthesizer for Students")
 st.markdown("Use Gemini AI + ArXiv to understand topics, find papers, and get research insights.")
 
 # ========== TABS ==========
-tab1, tab2, tab3,tab4 = st.tabs(["📘 Topic Explainer", "📄 Paper Finder", "🔍 Gap & Methodology", "🧠 Research Agent"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📘 Topic Explainer", "📄 Paper Finder", "🔍 Gap & Methodology", "🧠 Research Agent", "📄 Upload PDF"])
 
 # ========== TAB 1: Topic Explainer ==========
 with tab1:
@@ -176,6 +177,7 @@ with tab1:
 # ========== TAB 2: Paper Search ==========
 with tab2:
     st.header("📄 Search Relevant Research Papers")
+    source = st.selectbox("Paper source:", ["ArXiv", "Semantic Scholar"])
     with st.form("search_form"):
         topic = st.text_input("Topic for paper search:")
         col1, col2 = st.columns(2)
@@ -187,10 +189,17 @@ with tab2:
         submitted = st.form_submit_button("🔎 Search Papers")
 
     if submitted and topic:
-        with st.spinner("Searching ArXiv..."):
-            papers = search_arxiv(topic, max_results=num_papers,
-                                  subject_filter=subject or None,
-                                  year_filter=year or None)
+        with st.spinner("Searching {source}..."):
+            if source == "ArXiv":
+                papers = search_arxiv(
+                    topic, max_results=num_papers,
+                    subject_filter=subject or None,
+                    year_filter=year or None
+                )
+            else:
+                from utils.semantic_scholar import search_semantic_scholar
+                papers = search_semantic_scholar(topic, limit=num_papers)
+
             st.session_state["papers"] = papers
             st.session_state["topic"] = topic
 
@@ -233,7 +242,7 @@ with tab3:
 
 # ========== TAB 4: LANGCHAIN AGENT SECTION ==========
 with tab4:
-    st.header("🧠 Ask the Research Agent")
+    st.header("🧠 Chat with Research Agent")
 
     query = st.text_input("Ask your research assistant:", placeholder="e.g., 'Find papers on LLMs and suggest methodology'")
 
@@ -242,3 +251,30 @@ with tab4:
             response = agent.run(query)
             st.success("Agent Response:")
             st.markdown(response)
+
+
+# ========== TAB 5:AGENTIC AI TAB ==========
+
+with tab5:
+    
+    st.header("📎 Upload PDF for Gemini Agent to Read")
+
+    uploaded_pdf = st.file_uploader("Upload a research paper (PDF)", type=["pdf"])
+
+    if uploaded_pdf is not None:
+        # Save to a temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(uploaded_pdf.read())
+            temp_pdf_path = tmp_file.name
+        st.success(" PDF uploaded successfully.")
+
+        # Let user now query about it
+        user_query = st.text_input("Ask something about the uploaded PDF (e.g., 'Summarize methods')")
+
+        if st.button("Run Agent on PDF") and user_query:
+            with st.spinner("Agent is analyzing..."):
+                # Add the PDF path into the query if needed
+                full_query = f"{user_query}. The PDF is located at: {temp_pdf_path}"
+                response = agent.run(full_query)
+                st.markdown("### 🤖 Agent Response")
+                st.markdown(response)

@@ -5,6 +5,8 @@ from utils.summarizer import (
     find_research_gap,
     suggest_methodology_based_on_gap
 )
+from utils.semantic_scholar import search_semantic_scholar
+from .pdf_reader_tool import pdf_reader_tool
 
 @tool
 def paper_search_tool(topic: str) -> str:
@@ -28,3 +30,18 @@ def methodology_tool(topic_and_gap: str) -> str:
     """Suggest a methodology and tools for a given topic and identified research gap."""
     topic, gap = topic_and_gap.split("||")
     return suggest_methodology_based_on_gap(topic, gap)
+
+@tool
+def semantic_scholar_search_tool(topic: str) -> str:
+    """Search for papers using Semantic Scholar API."""
+    results = search_semantic_scholar(topic, max_results=5)
+    return "\n\n".join([f"Title: {p['title']}\nAuthors: {p['authors']}\nSummary: {p['summary']}" for p in results])
+
+__all__ = [
+    "paper_search_tool",
+    "summarize_tool",
+    "gap_analysis_tool",
+    "methodology_tool",
+    "semantic_scholar_search_tool",
+    "pdf_reader_tool"
+]
