@@ -141,6 +141,8 @@ with tab5:
     
     st.header("📎 Upload PDF for Gemini Agent to Read")
 
+    st.warning("For best results, upload short or relevant excerpts from your PDF (max 5–10 pages recommended).")
+
     uploaded_pdf = st.file_uploader("Upload a research paper (PDF)", type=["pdf"])
 
     if uploaded_pdf is not None:
