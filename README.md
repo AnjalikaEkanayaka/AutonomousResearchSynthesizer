@@ -45,6 +45,9 @@ An AI-powered agentic web application that assists students with academic resear
 
 ---
 
+##  Demo
+- **Link**: https://anjalikaekanayaka-autonomousresearchsynthesizer-app-vwzyby.streamlit.app/
+
 ##  Setup Instructions
 
 ### 1. Clone the Repository
